@@ -35,7 +35,9 @@ SUITE (SuiteOne) {
     
     TEST ("Test Four") {
         runner->IsTrue(true, "Test Condition One", "Should not be shown");
-        while (true) {}
+//        while (true) {}
+        int foo = *((int*)0);
+        std::cout << foo;
     }
     
 }

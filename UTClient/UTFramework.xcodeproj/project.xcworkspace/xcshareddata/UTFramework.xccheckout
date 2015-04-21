@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>272C7231-DA8F-40CD-B795-C7FB0438AE20</string>
+	<key>IDESourceControlProjectName</key>
+	<string>UTFramework</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>9DA29D472D7E5BEFD1917DD2F805432D6C2147B0</key>
+		<string>https://github.com/AThilenius/UTFramework</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>UTClient/UTFramework.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>9DA29D472D7E5BEFD1917DD2F805432D6C2147B0</key>
+		<string>../../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/AThilenius/UTFramework</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>9DA29D472D7E5BEFD1917DD2F805432D6C2147B0</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>9DA29D472D7E5BEFD1917DD2F805432D6C2147B0</string>
+			<key>IDESourceControlWCCName</key>
+			<string>UTFramework</string>
+		</dict>
+	</array>
+</dict>
+</plist>

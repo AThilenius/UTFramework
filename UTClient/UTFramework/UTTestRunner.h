@@ -38,6 +38,8 @@ private:
     void SigSegCatcher(std::function<void(UTTestRunner*)> suiteFunction);
     void ThreadedTimeout(std::function<void(UTTestRunner*)> suiteFunction);
     
+    friend void SigSegVHandler (int signum);
+    
 private:
     std::vector<UTTest> m_tests;
     std::function<bool(std::string)> m_handler;

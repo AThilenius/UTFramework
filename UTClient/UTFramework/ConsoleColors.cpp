@@ -7,7 +7,7 @@
 //
 #include "ConsoleColors.h"
 
-#define DISABLE_COLORS
+//#define DISABLE_COLORS
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
     #include <Windows.h>

@@ -7,15 +7,53 @@
 //
 #include "UTTestRunner.h"
 
+#undef new
+#undef delete
+
 #include <thread>
-#include <future>
 #include <chrono>
 #include <signal.h>
 
-// Needed by the POSIX SIG-SEGV handler. Don't have a good way around this ugly-ness yet.
 std::function<void()> g_testIterateFunction;
 std::function<void()> g_testEndFunction;
 std::function<void()> g_sigSegFailure;
+std::function<void*(size_t)> g_defaultNewHandler = [](size_t size) -> void* { return malloc(size); };
+std::function<void(void*)> g_defaultDeleteHandler = [](void* ptr) -> void { free(ptr); };
+std::function<void*(size_t)> g_newHandler = g_defaultNewHandler;
+std::function<void(void*)> g_deleteHandler = g_defaultDeleteHandler;
+
+// Used to protect the test-end print
+std::mutex g_printLock;
+
+// Use by the new / delete overload macros
+const char* __file__ = "unknown";
+size_t __line__ = -1;
+bool __handler_active__ = false;
+
+void* operator new(size_t size) {
+    if (__handler_active__) {
+        return g_defaultNewHandler(size);
+    } else {
+        __handler_active__ = true;
+        void* ptr = g_newHandler(size);
+        __file__ = "unknown";
+        __line__ = -1;
+        __handler_active__ = false;
+        return ptr;
+    }
+}
+
+void operator delete(void* ptr) noexcept {
+    if (__handler_active__) {
+        g_defaultDeleteHandler(ptr);
+    } else {
+        __handler_active__ = true;
+        g_deleteHandler(ptr);
+        __file__ = "unknown";
+        __line__ = -1;
+        __handler_active__ = false;
+    }
+}
 
 void UTTestRunner::RunSuite(std::string suiteName, std::function<void(UTTestRunner*)> suiteFunction) {
     // Set up the first UTTest now, to allow for the Config to be changed
@@ -40,7 +78,7 @@ void UTTestRunner::RunSuite(std::string suiteName, std::function<void(UTTestRunn
             m_activeTest = &m_tests[m_activeTestIndex];
             
             // Need to load the new config here. Might want to use a RACK format for this...
-            ThreadedTimeout(suiteFunction);
+            SigSegCatcher(suiteFunction);
             
             m_currentTestIndex = 0;
         }
@@ -48,6 +86,10 @@ void UTTestRunner::RunSuite(std::string suiteName, std::function<void(UTTestRunn
     
     // Create the end function (can then be used by the POSIX SIGSEGV handler)
     g_testEndFunction = [this, suiteName]() {
+        g_printLock.lock();
+        g_testEndFunction = []() {};
+        g_printLock.unlock();
+        
         bool didPass = true;
         for (int i = 0; i < m_tests.size() - 1; i++) {
             UTTest* test = &m_tests[i];
@@ -68,8 +110,11 @@ void UTTestRunner::RunSuite(std::string suiteName, std::function<void(UTTestRunn
         } else {
             std::cout << Red << "Failed!" << White << std::endl;
         }
+        
+        std::cout.flush();
     };
     
+    // Used by the SIG-SEG handler to post an error message.
     g_sigSegFailure = [this]() {
        m_activeTest->FatalMessage = "SEG-FAULT!\nYou are likley trying to dereference a null pointer.";
     };
@@ -126,7 +171,53 @@ void UTTestRunner::StdExceptionCatcher(std::function<void(UTTestRunner*)> suiteF
 }
 
 void UTTestRunner::MemoryMonitor(std::function<void(UTTestRunner*)> suiteFunction) {
+    // Register Custom handlers for new / delete
+    g_newHandler = [this](size_t size) -> void* {
+        void* ptr = malloc(size);
+        
+        if (__line__ != -1) {
+            this->m_activeTest->RegisterAllocation(MemoryAllocation(ptr, size, __file__, __line__));
+        }
+        
+        return ptr;
+    };
+    
+    g_deleteHandler = [this](void* ptr) -> void {
+        if (__line__ != -1) {
+            this->m_activeTest->RegisterFree(ptr);
+        }
+        
+        free(ptr);
+    };
+    
     StdExceptionCatcher(suiteFunction);
+}
+
+void UTTestRunner::ThreadedTimeout(std::function<void(UTTestRunner*)> suiteFunction) {
+    std::cout.flush();
+    bool threadFinished = false;
+    std::thread workerThread ([this, &suiteFunction, &threadFinished](){
+        // No need to syncronize this
+        this->MemoryMonitor(suiteFunction);
+        threadFinished = true;
+    });
+    // workerThread.detach();
+    
+    // Again, no need to syncronize this, there are no possible race conditions that I care about
+    auto endTime = std::chrono::steady_clock::now() + std::chrono::seconds(4);
+    while (threadFinished == false && std::chrono::steady_clock::now() < endTime) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    
+    // Check if we timed out
+    if (std::chrono::steady_clock::now() >= endTime) {
+        workerThread.detach();
+        m_activeTest->FatalMessage = "Timed out, likley an infite loop or waiting for user input!";
+    } else {
+        workerThread.join();
+    }
+    
+    std::cout.flush();
 }
 
 void SigSegVHandler (int signum) {
@@ -137,36 +228,12 @@ void SigSegVHandler (int signum) {
     
     g_sigSegFailure();
     g_testIterateFunction();
-    signal(signum, SIG_DFL);
     g_testEndFunction();
+    std::cout.flush();
+    signal(signum, SIG_DFL);
 }
 
 void UTTestRunner::SigSegCatcher(std::function<void(UTTestRunner*)> suiteFunction) {
- 
-    MemoryMonitor(suiteFunction);
-    
-//    signal(signum, SIG_DFL);
-}
-
-void UTTestRunner::ThreadedTimeout(std::function<void(UTTestRunner*)> suiteFunction) {
     signal(SIGSEGV, SigSegVHandler);
-    SigSegCatcher(suiteFunction);
-//    bool threadFinished = false;
-//    std::thread workerThread ([this, &suiteFunction, &threadFinished](){
-//        // No need to syncronize this
-//        this->SigSegCatcher(suiteFunction);
-//        threadFinished = true;
-//    });
-//    workerThread.detach();
-//    
-//    // Again, no need to syncronize this, there are no possible race conditions that I care about
-//    auto endTime = std::chrono::steady_clock::now() + std::chrono::seconds(4);
-//    while (threadFinished == false && std::chrono::steady_clock::now() < endTime) {
-//        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//    }
-//    
-//    // Check if we timed out
-//    if (std::chrono::steady_clock::now() >= endTime) {
-//        m_activeTest->FatalMessage = "Timed out, likley an infite loop or waiting for user input!";
-//    }
+    ThreadedTimeout(suiteFunction);
 }

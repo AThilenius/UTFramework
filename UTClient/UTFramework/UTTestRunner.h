@@ -17,6 +17,16 @@
 #define TEST(test_name) if (runner->_TestPass(test_name))
 
 
+extern const char* __file__;
+extern size_t __line__;
+
+void* operator new(size_t size);
+void operator delete(void* ptr) noexcept;
+
+#define new (__file__=__FILE__,__line__=__LINE__) && 0 ? NULL : new
+#define delete (__file__=__FILE__,__line__=__LINE__), delete
+
+
 class UTTestRunner {
     
 public:

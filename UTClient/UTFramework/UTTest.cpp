@@ -42,6 +42,37 @@ UTTestConfiguration::UTTestConfiguration() :
 }
 
 
+// ======  MemoryAllocation  ===========================================================================================
+MemoryAllocation::MemoryAllocation(void* address, size_t size, std::string file, size_t line) :
+    Address(address),
+    Size(size),
+    File(file),
+    Line(line) {
+    
+    std::vector<std::string> tokens;
+    std::istringstream stringStream (File);
+    std::string token;
+    while (std::getline(stringStream, token, '\\')) {
+        tokens.push_back(token);
+    }
+        
+        if (tokens.size() > 1) {
+            File = tokens[tokens.size() - 1];
+        } else {
+            // Split on /
+            stringStream = std::istringstream (File);
+            tokens.clear();
+            while (std::getline(stringStream, token, '/')) {
+                tokens.push_back(token);
+            }
+            
+            if (tokens.size() > 1) {
+                File = tokens[tokens.size() - 1];
+            }
+        }
+}
+
+
 // ======  UTTest  =====================================================================================================
 UTTest::UTTest()  :
     Name("unknown"),
@@ -56,7 +87,73 @@ bool UTTest::DidPass()  {
             didPass = false;
     }
     
+    size_t closedSize = 0;
+    for (MemoryAllocation allocation : ClosedAllocations) {
+        closedSize += allocation.Size;
+    }
+    
+    size_t ftcSize = 0;
+    for (auto kvp: OutstandingAllocations) {
+        ftcSize += kvp.second.Size;
+    }
+    
+    size_t ftoSize = 0;
+    for (auto kvp: OutstandingFrees) {
+        ftoSize += kvp.second.Size;
+    }
+    
+    // First check for memory leaks
+    if (Configuration.LeakCheck && ftcSize > 0) {
+        std::stringstream stringStream;
+        stringStream << "Memory Leak! 'new' was called without a corresponding 'delete':\n";
+        for (auto kvp : OutstandingAllocations) {
+            stringStream << "  - " << kvp.second.Size << " Bytes from: " << kvp.second.File << ". Line: "
+                << kvp.second.Line << "\n";
+        }
+        stringStream << ftcSize << " Bytes leaked total";
+        FatalMessage = stringStream.str();
+        return false;
+    }
+   
+    // Min check
+    if (Configuration.MinMemory != -1 && Configuration.MinMemory > closedSize) {
+        std::stringstream stringStream;
+        stringStream << "Not Enough Heap Memory Allocated!\n";
+        stringStream << " - Minimum Required Heap Allocations: " << Configuration.MinMemory << " Bytes\n";
+        stringStream << " - Total Heap Allocations: " << closedSize << " Bytes";
+        FatalMessage = stringStream.str();
+        return false;
+    }
+    
+    // Max check
+    if (Configuration.MaxMemory != -1 && Configuration.MaxMemory < closedSize) {
+        std::stringstream stringStream;
+        stringStream << "Too Much Heap Memory Allocated!\n";
+        stringStream << " - Maximum Allowed Heap Allocations: " << Configuration.MaxMemory << " Bytes\n";
+        stringStream << " - Total Heap Allocations: " << closedSize << " Bytes";
+        FatalMessage = stringStream.str();
+        return false;
+    }
+    
     return didPass;
+}
+
+
+void UTTest::RegisterAllocation (MemoryAllocation allocation) {
+    OutstandingAllocations.insert( { allocation.Address, allocation } );
+}
+
+void UTTest::RegisterFree (void* ptr) {
+    auto iter = OutstandingAllocations.find(ptr);
+    if (iter != OutstandingAllocations.end()) {
+        // Close correctly
+        ClosedAllocations.push_back(iter->second);
+    } else {
+        // delete called without new being called
+        OutstandingFrees.insert( { iter->first, iter->second } );
+    }
+    
+    OutstandingAllocations.erase(iter);
 }
 
 std::ostream& operator<< (std::ostream& stream, UTTest& utTest) {

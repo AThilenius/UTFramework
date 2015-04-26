@@ -7,7 +7,6 @@
 //
 #pragma once
 
-#include <memory>
 #include <string>
 
 
@@ -24,22 +23,15 @@ typedef uint64_t UInt64;
 namespace Socket {
     
     
-typedef std::shared_ptr<std::string> StringPtr;
-
-    
 class TcpSocket {
 public:
     TcpSocket();
     ~TcpSocket();
 
     bool Connect(std::string ipAddress, UInt16 port);
-    StringPtr Read();
-    bool Write(StringPtr data);
+    std::string Read();
+    bool Write(std::string data);
     
-private:
-    bool ReadCompleate(int socket, char* buffer, UInt32 count);
-    bool ReadToBlankline(int socket, StringPtr buffer);
-
 private:
 	int m_socketHandle;
 };

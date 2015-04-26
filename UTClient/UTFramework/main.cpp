@@ -72,10 +72,7 @@
 int main(int argc, const char * argv[]) {
 //    UTTestRunner runner;
 //    runner.RunSuite("Test Name", &SuiteOne);
-    HttpRequestPtr request = HttpRequest::FromIp("127.0.0.1", HttpMethod::POST, "/");
-    HttpResponse* response = new HttpResponse();
     
-    request->Content = "{\"entity_name\" : \"TestName\"}";
-    request->GetResponse(response);
+    HttpResponsePtr response = HttpRequest::Post("127.0.0.1", "/", "{\"entity_name\" : \"TestName\"}");
     std::cout << "Got back:\n" << response->Content << std::endl;
 }

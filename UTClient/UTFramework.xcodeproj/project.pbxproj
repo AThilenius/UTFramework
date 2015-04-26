@@ -14,7 +14,6 @@
 		707824251AE76B56002CEFBB /* TcpSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 707824221AE76B56002CEFBB /* TcpSocket.cpp */; };
 		7078242A1AE76B7C002CEFBB /* HttpRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 707824281AE76B7C002CEFBB /* HttpRequest.cpp */; };
 		7078242D1AE7744B002CEFBB /* HttpResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7078242B1AE7744B002CEFBB /* HttpResponse.cpp */; };
-		707824301AE81F2A002CEFBB /* HttpHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7078242E1AE81F2A002CEFBB /* HttpHeader.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,8 +43,6 @@
 		707824291AE76B7C002CEFBB /* HttpRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpRequest.h; sourceTree = "<group>"; };
 		7078242B1AE7744B002CEFBB /* HttpResponse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpResponse.cpp; sourceTree = "<group>"; };
 		7078242C1AE7744B002CEFBB /* HttpResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpResponse.h; sourceTree = "<group>"; };
-		7078242E1AE81F2A002CEFBB /* HttpHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpHeader.cpp; sourceTree = "<group>"; };
-		7078242F1AE81F2A002CEFBB /* HttpHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpHeader.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,8 +104,6 @@
 				707824291AE76B7C002CEFBB /* HttpRequest.h */,
 				7078242B1AE7744B002CEFBB /* HttpResponse.cpp */,
 				7078242C1AE7744B002CEFBB /* HttpResponse.h */,
-				7078242E1AE81F2A002CEFBB /* HttpHeader.cpp */,
-				7078242F1AE81F2A002CEFBB /* HttpHeader.h */,
 			);
 			name = Http;
 			sourceTree = "<group>";
@@ -171,7 +166,6 @@
 			files = (
 				7078242D1AE7744B002CEFBB /* HttpResponse.cpp in Sources */,
 				707824251AE76B56002CEFBB /* TcpSocket.cpp in Sources */,
-				707824301AE81F2A002CEFBB /* HttpHeader.cpp in Sources */,
 				7078242A1AE76B7C002CEFBB /* HttpRequest.cpp in Sources */,
 				700F821B1AE4D7B8000BF6A1 /* UTTestRunner.cpp in Sources */,
 				700F820D1AE080FB000BF6A1 /* main.cpp in Sources */,

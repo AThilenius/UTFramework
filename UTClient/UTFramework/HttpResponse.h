@@ -8,13 +8,21 @@
 #pragma once
 
 #include <string>
+#include <memory>
+
+
+class HttpResponse;
+typedef std::shared_ptr<HttpResponse> HttpResponsePtr;
 
 
 class HttpResponse {
 public:
+    static HttpResponsePtr FromHtml(std::string html);
+    
+private:
     HttpResponse();
-    bool FromHtml(std::string html);
     
 public:
+    std::string HeaderText;
     std::string Content;
 };

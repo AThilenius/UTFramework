@@ -8,44 +8,52 @@
 #include "HttpRequest.h"
 
 #include <iostream>
+#include <map>
+#include <sstream>
+
+#include "TcpSocket.h"
 
 
-HttpRequest::HttpRequest(HttpMethod method, std::string route) :
-m_header(method, route) {
-    
+HttpRequest::HttpRequest() {
 }
 
 
-HttpResponse HttpRequest::Post (std::string ipAddress, std::string route) {
-    
-}
-
-HttpRequestPtr HttpRequest::FromIp(std::string ipAddress, HttpMethod method, std::string route) {
-    HttpRequest* req = new HttpRequest(method, route);
-    req->m_ipAddress = ipAddress;
-    return HttpRequestPtr(req);
-}
-
-bool HttpRequest::GetResponse (HttpResponse* httpResponse) {
-    m_socket.Connect(m_ipAddress, 3000);
-    std::string html = m_header.ToHtml(Content);
-    
-    std::cout << "Sending: " << std::endl << html << std::endl;
-    
-    if (!m_socket.Write(html) {
-        std::cout << "Failed to connect to server." << std::endl;
-        return false;
-    } else {
-        // Wait for response
-        Socket::TcpMessagePtr response = m_socket.Read();
-        
-        // Null terminate
-        char* cStr = new char [response->Count + 1];
-        memcpy(cStr, response->Data, response->Count);
-        cStr[response->Count] = 0;
-        std::string responseHtml (cStr);
-        delete cStr;
-        
-        return httpResponse->FromHtml(responseHtml);
+HttpResponsePtr HttpRequest::Post (std::string ipAddress, std::string route, std::string content) {
+    // Try to connect the socket
+    Socket::TcpSocket socket;
+    if (!socket.Connect(ipAddress, 3000)) {
+        std::cout << "Failed to establish a connection with the UTServer." << std::endl;
+        return HttpResponsePtr(nullptr);
     }
+    
+    // Build out the HTML request
+    std::map<std::string, std::string> headers;
+    std::stringstream htmlStream;
+    
+    headers["Accept"] = "application/json";
+    headers["Accept-Charset"] = "utf-8";
+    headers["Connection"] = "close";
+    headers["Content-Length"] = std::to_string(content.length());
+    headers["Content-Type"] = "application/json";
+    
+    htmlStream << "POST " << route << " HTTP/1.1" << "\r\n";
+    htmlStream << "Host: " << ipAddress << "\r\n";
+    
+    for (auto kvp : headers) {
+        htmlStream << kvp.first << ": " << kvp.second << "\r\n";
+    }
+    
+    htmlStream << "\r\n";
+    htmlStream << content;
+    
+    // Send the request
+    if (!socket.Write(htmlStream.str())) {
+        std::cout << "Failed to send request to UTServer." << std::endl;
+        return HttpResponsePtr(nullptr);
+    }
+    
+    // Get Response
+    std::string response = socket.Read();
+    
+    return HttpResponse::FromHtml(response);
 }

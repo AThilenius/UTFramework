@@ -11,6 +11,10 @@
 		700F82151AE4D47F000BF6A1 /* ConsoleColors.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700F82131AE4D47F000BF6A1 /* ConsoleColors.cpp */; };
 		700F82181AE4D600000BF6A1 /* UTTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700F82161AE4D600000BF6A1 /* UTTest.cpp */; };
 		700F821B1AE4D7B8000BF6A1 /* UTTestRunner.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700F82191AE4D7B8000BF6A1 /* UTTestRunner.cpp */; };
+		707824251AE76B56002CEFBB /* TcpSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 707824221AE76B56002CEFBB /* TcpSocket.cpp */; };
+		7078242A1AE76B7C002CEFBB /* HttpRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 707824281AE76B7C002CEFBB /* HttpRequest.cpp */; };
+		7078242D1AE7744B002CEFBB /* HttpResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7078242B1AE7744B002CEFBB /* HttpResponse.cpp */; };
+		707824301AE81F2A002CEFBB /* HttpHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 7078242E1AE81F2A002CEFBB /* HttpHeader.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -34,6 +38,14 @@
 		700F82171AE4D600000BF6A1 /* UTTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UTTest.h; sourceTree = "<group>"; };
 		700F82191AE4D7B8000BF6A1 /* UTTestRunner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UTTestRunner.cpp; sourceTree = "<group>"; };
 		700F821A1AE4D7B8000BF6A1 /* UTTestRunner.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UTTestRunner.h; sourceTree = "<group>"; };
+		707824221AE76B56002CEFBB /* TcpSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpSocket.cpp; sourceTree = "<group>"; };
+		707824231AE76B56002CEFBB /* TcpSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpSocket.h; sourceTree = "<group>"; };
+		707824281AE76B7C002CEFBB /* HttpRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpRequest.cpp; sourceTree = "<group>"; };
+		707824291AE76B7C002CEFBB /* HttpRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpRequest.h; sourceTree = "<group>"; };
+		7078242B1AE7744B002CEFBB /* HttpResponse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpResponse.cpp; sourceTree = "<group>"; };
+		7078242C1AE7744B002CEFBB /* HttpResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpResponse.h; sourceTree = "<group>"; };
+		7078242E1AE81F2A002CEFBB /* HttpHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpHeader.cpp; sourceTree = "<group>"; };
+		7078242F1AE81F2A002CEFBB /* HttpHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpHeader.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +78,8 @@
 		700F820B1AE080FB000BF6A1 /* UTFramework */ = {
 			isa = PBXGroup;
 			children = (
+				707824271AE76B67002CEFBB /* Http */,
+				707824261AE76B5B002CEFBB /* Socket */,
 				700F820C1AE080FB000BF6A1 /* main.cpp */,
 				700F82131AE4D47F000BF6A1 /* ConsoleColors.cpp */,
 				700F82141AE4D47F000BF6A1 /* ConsoleColors.h */,
@@ -75,6 +89,28 @@
 				700F821A1AE4D7B8000BF6A1 /* UTTestRunner.h */,
 			);
 			path = UTFramework;
+			sourceTree = "<group>";
+		};
+		707824261AE76B5B002CEFBB /* Socket */ = {
+			isa = PBXGroup;
+			children = (
+				707824221AE76B56002CEFBB /* TcpSocket.cpp */,
+				707824231AE76B56002CEFBB /* TcpSocket.h */,
+			);
+			name = Socket;
+			sourceTree = "<group>";
+		};
+		707824271AE76B67002CEFBB /* Http */ = {
+			isa = PBXGroup;
+			children = (
+				707824281AE76B7C002CEFBB /* HttpRequest.cpp */,
+				707824291AE76B7C002CEFBB /* HttpRequest.h */,
+				7078242B1AE7744B002CEFBB /* HttpResponse.cpp */,
+				7078242C1AE7744B002CEFBB /* HttpResponse.h */,
+				7078242E1AE81F2A002CEFBB /* HttpHeader.cpp */,
+				7078242F1AE81F2A002CEFBB /* HttpHeader.h */,
+			);
+			name = Http;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -133,6 +169,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7078242D1AE7744B002CEFBB /* HttpResponse.cpp in Sources */,
+				707824251AE76B56002CEFBB /* TcpSocket.cpp in Sources */,
+				707824301AE81F2A002CEFBB /* HttpHeader.cpp in Sources */,
+				7078242A1AE76B7C002CEFBB /* HttpRequest.cpp in Sources */,
 				700F821B1AE4D7B8000BF6A1 /* UTTestRunner.cpp in Sources */,
 				700F820D1AE080FB000BF6A1 /* main.cpp in Sources */,
 				700F82181AE4D600000BF6A1 /* UTTest.cpp in Sources */,

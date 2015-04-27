@@ -13,14 +13,19 @@
 #include <thread>
 #include <chrono>
 #include <signal.h>
+#include <sstream>
 
 std::function<void()> g_testIterateFunction;
 std::function<void()> g_testEndFunction;
-std::function<void()> g_sigSegFailure;
 std::function<void*(size_t)> g_defaultNewHandler = [](size_t size) -> void* { return malloc(size); };
 std::function<void(void*)> g_defaultDeleteHandler = [](void* ptr) -> void { free(ptr); };
 std::function<void*(size_t)> g_newHandler = g_defaultNewHandler;
 std::function<void(void*)> g_deleteHandler = g_defaultDeleteHandler;
+
+// These must be global because the stack ?can? be unwound when catching a sig-segv.
+UTTestRunner* g_testRunner;
+std::string g_suiteName;
+std::function<void(UTTestRunner*)> g_suiteFunction;
 
 // Used to protect the test-end print
 std::mutex g_printLock;
@@ -56,6 +61,11 @@ void operator delete(void* ptr) noexcept {
 }
 
 void UTTestRunner::RunSuite(std::string suiteName, std::function<void(UTTestRunner*)> suiteFunction) {
+    // Use global variables to prevent stack unwinding issues from sig-segv
+    g_testRunner = this;
+    g_suiteName = suiteName;
+    g_suiteFunction = suiteFunction;
+    
     // Set up the first UTTest now, to allow for the Config to be changed
     m_tests.push_back(UTTest());
     
@@ -70,39 +80,40 @@ void UTTestRunner::RunSuite(std::string suiteName, std::function<void(UTTestRunn
     m_activeTestIndex = -1;
     
     // Create the iterate function (can then be used by the POSIX SIGSEGV handler)
-    g_testIterateFunction = [this, suiteFunction]() {
-        m_currentTestIndex = 0;
-        m_activeTestIndex++;
-        for (m_activeTest = 0; m_activeTestIndex < m_tests.size() - 1; m_activeTestIndex++) {
+    g_testIterateFunction = []() {
+        g_testRunner->m_currentTestIndex = 0;
+        g_testRunner->m_activeTestIndex++;
+        for (g_testRunner->m_activeTest = 0; g_testRunner->m_activeTestIndex < g_testRunner->m_tests.size() - 1;
+             g_testRunner->m_activeTestIndex++) {
             
-            m_activeTest = &m_tests[m_activeTestIndex];
+            g_testRunner->m_activeTest = &g_testRunner->m_tests[g_testRunner->m_activeTestIndex];
             
             // Need to load the new config here. Might want to use a RACK format for this...
-            SigSegCatcher(suiteFunction);
+            g_testRunner->SigSegCatcher(g_suiteFunction);
             
-            m_currentTestIndex = 0;
+            g_testRunner->m_currentTestIndex = 0;
         }
     };
     
     // Create the end function (can then be used by the POSIX SIGSEGV handler)
-    g_testEndFunction = [this, suiteName]() {
+    g_testEndFunction = []() {
         g_printLock.lock();
         g_testEndFunction = []() {};
         g_printLock.unlock();
         
         bool didPass = true;
-        for (int i = 0; i < m_tests.size() - 1; i++) {
-            UTTest* test = &m_tests[i];
+        for (int i = 0; i < g_testRunner->m_tests.size() - 1; i++) {
+            UTTest* test = &g_testRunner->m_tests[i];
             if (!test->DidPass())
                 didPass = false;
         }
         
         std::cout << std::endl;
-        std::cout << Blue << "Suite: " << suiteName << std::endl;
+        std::cout << Blue << "Suite: " << g_suiteName << std::endl;
         std::cout << Blue << "|" << std::endl;
-        for (int i = 0; i < m_tests.size() - 1; i++) {
-            UTTest* test = &m_tests[i];
-            std::cout << *test;
+        for (int i = 0; i < g_testRunner->m_tests.size() - 1; i++) {
+            UTTest* test = &g_testRunner->m_tests[i];
+            test->Print();
         }
         
         if (didPass) {
@@ -112,11 +123,28 @@ void UTTestRunner::RunSuite(std::string suiteName, std::function<void(UTTestRunn
         }
         
         std::cout.flush();
-    };
-    
-    // Used by the SIG-SEG handler to post an error message.
-    g_sigSegFailure = [this]() {
-       m_activeTest->FatalMessage = "SEG-FAULT!\nYou are likley trying to dereference a null pointer.";
+        
+        // To JSON
+        std::stringstream jsonStream;
+        jsonStream << "{\"TestRun\":{";
+        jsonStream <<     "\"Name\":\"" << g_suiteName << "\",";
+        jsonStream <<        "\"Tests\":[";
+        
+        for (int i = 0; i < g_testRunner->m_tests.size() - 1; i++) {
+            UTTest* test = &g_testRunner->m_tests[i];
+            jsonStream << "{";
+            jsonStream << test->ToJson() << "}";
+            if (i != g_testRunner->m_tests.size() - 2) {
+                jsonStream << ",";
+            }
+        }
+        
+        jsonStream <<         "]";
+        jsonStream <<      "}";
+        jsonStream << "}";
+        
+        std::cout << jsonStream.str();
+        
     };
     
     // Funally call both
@@ -226,7 +254,7 @@ void SigSegVHandler (int signum) {
     // Re-Register the SIG-SEGV handler
     signal(SIGSEGV, SigSegVHandler);
     
-    g_sigSegFailure();
+    g_testRunner->m_activeTest->FatalMessage = "SEG-FAULT!\nYou are likley trying to dereference a null pointer.";
     g_testIterateFunction();
     g_testEndFunction();
     std::cout.flush();

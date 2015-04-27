@@ -17,9 +17,8 @@ class UTCondition {
     
 public:
     UTCondition (bool didPass, std::string name, std::string asertMessage);
-    
-private:
-    friend std::ostream& operator<< (std::ostream& stream, const UTCondition& utCondition);
+    void Print();
+    std::string ToJson();
     
 public:
     bool DidPass;
@@ -64,8 +63,8 @@ public:
     bool DidPass();
     void RegisterAllocation (MemoryAllocation allocation);
     void RegisterFree (void* ptr);
-    
-    friend std::ostream& operator<< (std::ostream& stream, UTTest& utTest);
+    void Print();
+    std::string ToJson();
     
 public:
     std::string Name;

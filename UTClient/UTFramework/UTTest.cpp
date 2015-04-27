@@ -21,15 +21,21 @@ UTCondition::UTCondition(bool didPass, std::string name, std::string asertMessag
     
 }
 
-std::ostream& operator<< (std::ostream& stream, const UTCondition& utCondition) {
-    if (utCondition.DidPass) {
-        stream << Blue << "|   |   " << Green << "-" << utCondition.Name << std::endl;
+void UTCondition::Print() {
+    if (DidPass) {
+        std::cout << Blue << "|   |   " << Green << "-" << Name << std::endl;
     } else {
-        stream << Blue << "|   |   " << Red << "-" << utCondition.Name << std::endl;
-        stream << Blue << "|   |   |   " << Yellow << utCondition.AssertMessage << std::endl;
+        std::cout << Blue << "|   |   " << Red << "-" << Name << std::endl;
+        std::cout << Blue << "|   |   |   " << Yellow << AssertMessage << std::endl;
     }
-    
-    return stream;
+}
+
+std::string UTCondition::ToJson() {
+    std::stringstream jsonStream;
+    jsonStream << "\"name\":\"" << Name << "\",";
+    jsonStream << "\"assert_message\":\"" << AssertMessage << "\",";
+    jsonStream << "\"did_pass\":" << (DidPass ? "true" : "false");
+    return jsonStream.str();
 }
 
 
@@ -105,7 +111,7 @@ bool UTTest::DidPass()  {
     // First check for memory leaks
     if (Configuration.LeakCheck && ftcSize > 0) {
         std::stringstream stringStream;
-        stringStream << "Memory Leak! 'new' was called without a corresponding 'delete':\n";
+        stringStream << "Memory Leak! new was called without a corresponding delete:\n";
         for (auto kvp : OutstandingAllocations) {
             stringStream << "  - " << kvp.second.Size << " Bytes from: " << kvp.second.File << ". Line: "
                 << kvp.second.Line << "\n";
@@ -156,29 +162,55 @@ void UTTest::RegisterFree (void* ptr) {
     OutstandingAllocations.erase(iter);
 }
 
-std::ostream& operator<< (std::ostream& stream, UTTest& utTest) {
-    stream << Blue << "|   Test: " << utTest.Name << std::endl;
+void UTTest::Print() {
+    std::cout << Blue << "|   Test: " << Name << std::endl;
     
     // Print out all but the last conditions
-    for (UTCondition condition : utTest.Conditions) {
-        stream << condition;
+    for (UTCondition condition : Conditions) {
+        condition.Print();
     }
 
-    if (utTest.FatalMessage == "") {
-        if (utTest.DidPass()) {
-            stream << Blue << "|   " << Green << "Passed!" << std::endl;
+    if (FatalMessage == "") {
+        if (DidPass()) {
+            std::cout << Blue << "|   " << Green << "Passed!" << std::endl;
         } else {
-            stream << Blue << "|   " << Red << "Failed!" << std::endl;
+            std::cout << Blue << "|   " << Red << "Failed!" << std::endl;
         }
     } else {
-        std::istringstream iss(utTest.FatalMessage);
+        std::istringstream iss(FatalMessage);
         for (std::string line; std::getline(iss, line); ) {
-            stream << Blue << "|   " << Red << line << std::endl;
+            std::cout << Blue << "|   " << Red << line << std::endl;
         }
         // stream << Blue << "|   " << Red << "Failed!" << std::endl;
     }
     
-    stream << Blue << "|" << std::endl;
+    std::cout << Blue << "|" << std::endl;
     
-    return stream;
+}
+
+std::string UTTest::ToJson() {
+    std::stringstream jsonStream;
+    
+    jsonStream << "\"test_name\":\"" << Name << "\",";
+    std::string escapedFatalMessage = FatalMessage;
+    
+    // The next 5!!! fucking lines are JUST to replace \n with \\n. Lord this language...
+    size_t pos = 0;
+    while ((pos = escapedFatalMessage.find("\n", pos)) != std::string::npos) {
+        escapedFatalMessage.replace(pos, 2, "\\n");
+        pos += 3;
+    }
+    
+    jsonStream << "\"fatal_message\":\"" << escapedFatalMessage << "\",";
+    jsonStream << "\"conditions\":[";
+    for (int i = 0; i < Conditions.size(); i++) {
+        UTCondition* condition = &Conditions[i];
+        jsonStream << "{" << condition->ToJson() << "}";
+        if (i != Conditions.size() - 1) {
+            jsonStream << ",";
+        }
+    }
+    jsonStream << "]";
+    
+    return jsonStream.str();
 }
